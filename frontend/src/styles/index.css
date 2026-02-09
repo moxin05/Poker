@@ -1,9 +1,25 @@
-/* 样式入口 - 按顺序导入所有样式模块 */
-@import './variables.css';
-@import './base.css';
-@import './auth.css';
-@import './lobby.css';
-@import './game.css';
-@import './components.css';
-@import './overlays.css';
-@import './responsive.css';
+:root {
+  color-scheme: dark;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+    Helvetica, Arial, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei",
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input {
+  font: inherit;
+}
+

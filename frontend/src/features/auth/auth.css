@@ -1,0 +1,156 @@
+.authPage {
+  min-height: 100vh;
+  position: relative;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.authPage__content {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.glassCard {
+  width: min(420px, 92vw);
+  border-radius: 18px;
+  padding: 22px 22px 18px;
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.glassCard__brand {
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.brandTitle {
+  font-size: 22px;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+}
+
+.brandSub {
+  margin-top: 8px;
+  font-size: 12px;
+  opacity: 0.78;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 14px 0 10px;
+}
+
+.tab {
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.12);
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  transition: 150ms ease;
+}
+
+.tab:hover {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.tab--active {
+  background: rgba(255, 230, 170, 0.14);
+  border-color: rgba(255, 230, 170, 0.32);
+  color: rgba(255, 245, 220, 0.95);
+}
+
+.form {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field__label {
+  font-size: 12px;
+  opacity: 0.82;
+}
+
+.input {
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  background: rgba(0, 0, 0, 0.16);
+  color: rgba(255, 255, 255, 0.92);
+  outline: none;
+}
+
+.input::placeholder {
+  color: rgba(255, 255, 255, 0.50);
+}
+
+.input:focus {
+  border-color: rgba(255, 230, 170, 0.35);
+  box-shadow: 0 0 0 3px rgba(255, 230, 170, 0.10);
+}
+
+.primaryBtn {
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 230, 170, 0.35);
+  background: linear-gradient(180deg, rgba(255, 230, 170, 0.28), rgba(255, 230, 170, 0.16));
+  color: rgba(255, 245, 220, 0.96);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: transform 120ms ease, filter 120ms ease;
+}
+
+.primaryBtn:hover {
+  filter: brightness(1.06);
+}
+
+.primaryBtn:active {
+  transform: translateY(1px);
+}
+
+.primaryBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.error {
+  font-size: 12px;
+  color: rgba(255, 210, 210, 0.96);
+  background: rgba(255, 70, 70, 0.12);
+  border: 1px solid rgba(255, 70, 70, 0.22);
+  padding: 8px 10px;
+  border-radius: 12px;
+}
+
+.hint {
+  text-align: center;
+  font-size: 12px;
+  opacity: 0.82;
+  margin-top: 6px;
+}
+
+.linkBtn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: rgba(255, 230, 170, 0.95);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
