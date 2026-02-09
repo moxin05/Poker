@@ -1,0 +1,41 @@
+/* 游戏主界面 */
+.game-container { width: 100vw; height: 100vh; display: flex; flex-direction: column; background: radial-gradient(ellipse at 50% 40%, #111133 0%, #070715 100%); overflow: hidden; }
+
+/* 头部 */
+.game-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 24px; background: rgba(0,0,0,0.4); border-bottom: 1px solid rgba(255,255,255,0.08); z-index: 10; }
+.game-header-left, .game-header-right { display: flex; align-items: center; gap: 12px; }
+.game-header-center { display: flex; align-items: center; }
+.room-code { background: rgba(255,215,0,0.15); color: var(--gold); padding: 4px 12px; border-radius: 4px; font-weight: 700; font-size: 14px; letter-spacing: 2px; }
+.blind-info { font-size: 13px; color: var(--text-secondary); }
+.hand-info { font-size: 13px; color: var(--text-muted); }
+
+.timer-display { font-size: 20px; font-weight: 800; color: var(--text-primary); background: rgba(255,255,255,0.08); padding: 4px 16px; border-radius: 6px; font-variant-numeric: tabular-nums; }
+.timer-display.warning { color: var(--negative-color); background: rgba(231,76,60,0.15); animation: timer-pulse 1s ease-in-out infinite; }
+@keyframes timer-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+.my-profit { font-weight: 700; font-size: 14px; padding: 3px 10px; border-radius: 4px; background: rgba(255,255,255,0.05); }
+.stats-btn-small { background: transparent; border: 1px solid rgba(255,255,255,0.15); color: var(--text-secondary); border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+.stats-btn-small:hover { border-color: var(--btn-primary); color: var(--btn-primary); }
+.leave-btn { padding: 6px 16px; background: rgba(192,57,43,0.3); border: 1px solid rgba(192,57,43,0.5); color: #e74c3c; border-radius: 4px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+.leave-btn:hover { background: rgba(192,57,43,0.5); }
+
+/* 桌面 */
+.table-area { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.poker-table { width: min(75vw, 900px); height: min(50vh, 400px); background: radial-gradient(ellipse at 50% 50%, #1e8449, #145a32, #0d4025); border-radius: 50%; border: 10px solid var(--table-border); box-shadow: 0 0 0 3px var(--table-border-inner), 0 0 40px rgba(0,0,0,0.5), inset 0 0 60px rgba(0,0,0,0.2); position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+.pot-display { background: rgba(0,0,0,0.35); padding: 6px 20px; border-radius: 20px; font-size: 16px; font-weight: 700; color: var(--gold); display: flex; align-items: center; gap: 6px; }
+.community-cards { display: flex; gap: 8px; justify-content: center; }
+.seats-container { position: absolute; inset: 0; pointer-events: none; }
+.seats-container > * { pointer-events: auto; }
+
+/* 摊牌横幅 */
+.showdown-banner { background: rgba(0,0,0,0.75); padding: 16px 24px; z-index: 15; border-top: 1px solid rgba(255,215,0,0.2); }
+.showdown-content { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; }
+.showdown-icon { font-size: 28px; }
+.showdown-info { display: flex; flex-direction: column; gap: 4px; }
+.showdown-winner { font-size: 14px; display: flex; align-items: center; gap: 8px; }
+.showdown-hand { color: var(--gold); }
+.showdown-amount { color: var(--positive-color); font-weight: 700; }
+.showdown-cards { display: flex; gap: 4px; font-size: 13px; }
+.red-card { color: var(--red-suit); font-weight: 700; }
+.black-card { color: #555; font-weight: 700; }
+.showdown-next { font-size: 13px; color: var(--text-muted); font-style: italic; }

@@ -1,0 +1,32 @@
+/* CSS 变量定义 */
+:root {
+  --bg-dark: #0a0a1a;
+  --bg-card: #151530;
+  --bg-card-hover: #1c1c40;
+  --table-green: #1a6b3c;
+  --table-green-dark: #0d4d2b;
+  --table-border: #8b7355;
+  --table-border-inner: #a08c6a;
+  --gold: #ffd700;
+  --gold-dim: #c9a400;
+  --text-primary: #ffffff;
+  --text-secondary: #8899aa;
+  --text-muted: #556677;
+  --red-suit: #e74c3c;
+  --black-suit: #ecf0f1;
+  --btn-fold: #c0392b;
+  --btn-fold-hover: #e74c3c;
+  --btn-check: #27ae60;
+  --btn-check-hover: #2ecc71;
+  --btn-raise: #e67e22;
+  --btn-raise-hover: #f39c12;
+  --btn-allin: #8e44ad;
+  --btn-allin-hover: #9b59b6;
+  --btn-primary: #3498db;
+  --btn-primary-hover: #2980b9;
+  --positive-color: #2ecc71;
+  --negative-color: #e74c3c;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --radius: 12px;
+  --radius-sm: 6px;
+}
