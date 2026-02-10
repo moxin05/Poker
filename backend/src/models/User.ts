@@ -3,7 +3,8 @@ import mongoose, { type InferSchemaType } from "mongoose";
 const UserSchema = new mongoose.Schema(
   {
     phone: { type: String, required: true, unique: true, index: true },
-    passwordHash: { type: String, required: true }
+    passwordHash: { type: String, required: true },
+    avatar: { type: String, default: "" }, // 头像文件路径，如 /uploads/avatars/xxx.webp
   },
   { timestamps: true }
 );

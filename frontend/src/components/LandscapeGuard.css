@@ -1,0 +1,50 @@
+/* 默认隐藏 */
+.landscapeGuard {
+  display: none;
+}
+
+/* 仅在竖屏且小屏（手机）时显示 */
+@media (orientation: portrait) and (max-width: 840px) {
+  .landscapeGuard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #322b26;
+    color: #f0e4d0;
+    text-align: center;
+    padding: 32px;
+  }
+
+  .landscapeGuard__icon {
+    font-size: 48px;
+    animation: rotateHint 2s ease-in-out infinite;
+  }
+
+  @keyframes rotateHint {
+    0%, 100% { transform: rotate(0deg); }
+    25%      { transform: rotate(90deg); }
+    75%      { transform: rotate(90deg); }
+  }
+
+  .landscapeGuard__title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    background: linear-gradient(135deg, #dcc18a, #c4a265);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .landscapeGuard__sub {
+    font-size: 14px;
+    color: rgba(240, 228, 208, 0.55);
+    max-width: 280px;
+    line-height: 1.6;
+  }
+}

@@ -36,7 +36,7 @@ authRouter.post("/register", async (req, res, next) => {
     const user = await UserModel.create({ phone, passwordHash });
 
     const token = signAccessToken({ sub: user._id.toString(), phone: user.phone });
-    res.json({ token, user: { id: user._id.toString(), phone: user.phone } });
+    res.json({ token, user: { id: user._id.toString(), phone: user.phone, avatar: "" } });
   } catch (e) {
     next(e);
   }
@@ -53,13 +53,14 @@ authRouter.post("/login", async (req, res, next) => {
     if (!ok) throw unauthorized("手机号或密码错误", "BAD_CREDENTIALS");
 
     const token = signAccessToken({ sub: user._id.toString(), phone: user.phone });
-    res.json({ token, user: { id: user._id.toString(), phone: user.phone } });
+    res.json({ token, user: { id: user._id.toString(), phone: user.phone, avatar: user.avatar || "" } });
   } catch (e) {
     next(e);
   }
 });
 
 authRouter.get("/me", requireAuth, async (req, res) => {
-  res.json({ user: { id: req.auth!.userId, phone: req.auth!.phone } });
+  const user = await UserModel.findById(req.auth!.userId).lean();
+  res.json({ user: { id: req.auth!.userId, phone: req.auth!.phone, avatar: user?.avatar || "" } });
 });
 

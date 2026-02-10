@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./auth/AuthContext.jsx";
 import AuthPage from "./features/auth/AuthPage.jsx";
 import LobbyPage from "./features/lobby/LobbyPage.jsx";
+import LandscapeGuard from "./components/LandscapeGuard.jsx";
 
 export default function App() {
   const { isBootstrapping, token } = useAuth();
@@ -9,6 +10,8 @@ export default function App() {
   if (isBootstrapping) return null;
 
   return (
+    <>
+      <LandscapeGuard />
     <Routes>
       <Route
         path="/login"
@@ -16,9 +19,10 @@ export default function App() {
       />
       <Route
         path="/"
-        element={token ? <LobbyPage /> : <Navigate to="/login" replace />}
+          element={token ? <LobbyPage /> : <Navigate to="/login" replace />}
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }

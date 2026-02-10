@@ -23,6 +23,8 @@ export default function PokerCard({
 }) {
   const symbol = SUIT_SYMBOLS[suit];
   const label = RANK_LABELS[rank];
+  const isRed = suit === "heart" || suit === "diamond";
+  const colorCls = isRed ? "pokerCard__badge--red" : "pokerCard__badge--dark";
 
   return (
     <div
@@ -40,24 +42,38 @@ export default function PokerCard({
       <div className="pokerCard__inner">
         {/* 正面 */}
         <div className="pokerCard__front">
-          <img
-            className="pokerCard__img"
-            src={getCardFront(suit, rank)}
-            alt={`${symbol}${label}`}
-            draggable={false}
-          />
-          {/* 盾形数字角标 */}
-          <div className="pokerCard__badge">{label}</div>
+          <div className="pokerCard__imgWrap">
+            <img
+              className="pokerCard__img"
+              src={getCardFront(suit, rank)}
+              alt={`${symbol}${label}`}
+              draggable={false}
+            />
+          </div>
         </div>
 
         {/* 背面 */}
         <div className="pokerCard__back">
-          <img
-            className="pokerCard__img"
-            src={CARD_BACK}
-            alt="牌背"
-            draggable={false}
-          />
+          <div className="pokerCard__imgWrap">
+            <img
+              className="pokerCard__img"
+              src={CARD_BACK}
+              alt="牌背"
+              draggable={false}
+            />
+          </div>
+        </div>
+
+        {/* 左上角标：花色 + 数字（始终渲染，靠 backface-visibility 隐藏） */}
+        <div className={`pokerCard__badge ${colorCls}`}>
+          <span className="pokerCard__badgeSuit">{symbol}</span>
+          <span className="pokerCard__badgeRank">{label}</span>
+        </div>
+
+        {/* 右下角标：镜像 */}
+        <div className={`pokerCard__badge pokerCard__badge--mirror ${colorCls}`}>
+          <span className="pokerCard__badgeSuit">{symbol}</span>
+          <span className="pokerCard__badgeRank">{label}</span>
         </div>
       </div>
     </div>
