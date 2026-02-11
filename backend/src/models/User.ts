@@ -4,7 +4,8 @@ const UserSchema = new mongoose.Schema(
   {
     phone: { type: String, required: true, unique: true, index: true },
     passwordHash: { type: String, required: true },
-    avatar: { type: String, default: "" }, // 头像文件路径，如 /uploads/avatars/xxx.webp
+    avatar: { type: String, default: "" },
+    tokenVersion: { type: Number, default: 0 }, // 每次登录递增，旧 token 失效
   },
   { timestamps: true }
 );

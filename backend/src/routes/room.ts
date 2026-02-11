@@ -5,6 +5,7 @@ import { UserModel } from "../models/User";
 import { requireAuth } from "../middleware/auth";
 import { badRequest, conflict, notFound } from "../utils/httpErrors";
 import { generateUniqueInviteCode } from "../utils/inviteCode";
+import { broadcastRoomUpdate } from "../socket";
 
 export const roomRouter = Router();
 
@@ -42,10 +43,11 @@ async function formatRoom(room: any) {
 }
 
 /* ------------------------------------------------
-   辅助：找到第一个空座位
+   辅助：找到第一个空座位（顺时针从 0 开始）
    ------------------------------------------------ */
 function findEmptySeat(players: any[], maxPlayers: number): number {
   const occupied = new Set(players.map((p: any) => p.seatIndex));
+  // 按顺序 0,1,2,3,4,5,6,7 找空位
   for (let i = 0; i < maxPlayers; i++) {
     if (!occupied.has(i)) return i;
   }
@@ -208,6 +210,9 @@ roomRouter.post("/join", async (req, res, next) => {
     });
     await room.save();
 
+    // 广播给房间内所有在线玩家
+    broadcastRoomUpdate(room._id.toString()).catch(() => {});
+
     res.json({ room: await formatRoom(room) });
   } catch (e) {
     next(e);
@@ -237,11 +242,18 @@ roomRouter.post("/:roomId/leave", async (req, res, next) => {
     if (room.players.length === 0) {
       room.status = "finished";
     } else if (room.hostId.toString() === userId) {
-      // 房主离开，转移给第一个玩家
-      room.hostId = room.players[0].userId;
+      // 房主继承：按 seatIndex 顺位给下一个人
+      const sorted = [...room.players].sort((a, b) => a.seatIndex - b.seatIndex);
+      room.hostId = sorted[0].userId;
     }
 
     await room.save();
+
+    // 广播给剩余玩家
+    if (room.players.length > 0) {
+      broadcastRoomUpdate(room._id.toString()).catch(() => {});
+    }
+
     res.json({ ok: true });
   } catch (e) {
     next(e);

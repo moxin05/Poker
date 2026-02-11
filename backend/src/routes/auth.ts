@@ -33,9 +33,9 @@ authRouter.post("/register", async (req, res, next) => {
     if (exists) throw conflict("手机号已注册", "PHONE_EXISTS");
 
     const passwordHash = await hashPassword(password);
-    const user = await UserModel.create({ phone, passwordHash });
+    const user = await UserModel.create({ phone, passwordHash, tokenVersion: 0 });
 
-    const token = signAccessToken({ sub: user._id.toString(), phone: user.phone });
+    const token = signAccessToken({ sub: user._id.toString(), phone: user.phone, ver: 0 });
     res.json({ token, user: { id: user._id.toString(), phone: user.phone, avatar: "" } });
   } catch (e) {
     next(e);
@@ -52,7 +52,11 @@ authRouter.post("/login", async (req, res, next) => {
     const ok = await verifyPassword(password, user.passwordHash);
     if (!ok) throw unauthorized("手机号或密码错误", "BAD_CREDENTIALS");
 
-    const token = signAccessToken({ sub: user._id.toString(), phone: user.phone });
+    // 递增 tokenVersion，旧 token 立即失效
+    const newVer = (user.tokenVersion ?? 0) + 1;
+    await UserModel.updateOne({ _id: user._id }, { tokenVersion: newVer });
+
+    const token = signAccessToken({ sub: user._id.toString(), phone: user.phone, ver: newVer });
     res.json({ token, user: { id: user._id.toString(), phone: user.phone, avatar: user.avatar || "" } });
   } catch (e) {
     next(e);

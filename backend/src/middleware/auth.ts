@@ -26,10 +26,14 @@ export async function requireAuth(
     const user = await UserModel.findById(payload.sub).lean();
     if (!user) return next(unauthorized("用户不存在", "USER_NOT_FOUND"));
 
+    // 唯一性登录校验：token 版本必须匹配
+    if (payload.ver !== (user.tokenVersion ?? 0)) {
+      return next(unauthorized("登录已失效，请重新登录", "TOKEN_EXPIRED"));
+    }
+
     req.auth = { userId: payload.sub, phone: user.phone };
     next();
   } catch {
     next(unauthorized("令牌校验失败", "INVALID_TOKEN"));
   }
 }
-

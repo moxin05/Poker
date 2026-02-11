@@ -5,6 +5,7 @@ import { env } from "../config/env";
 export type JwtPayload = {
   sub: string; // userId
   phone: string;
+  ver: number; // tokenVersion，用于唯一性登录校验
 };
 
 export function signAccessToken(payload: JwtPayload): string {
@@ -21,9 +22,9 @@ export function verifyAccessToken(token: string): JwtPayload {
 
   const sub = (decoded as any).sub;
   const phone = (decoded as any).phone;
-  if (typeof sub !== "string" || typeof phone !== "string") {
+  const ver = (decoded as any).ver;
+  if (typeof sub !== "string" || typeof phone !== "string" || typeof ver !== "number") {
     throw new Error("Invalid token payload");
   }
-  return { sub, phone };
+  return { sub, phone, ver };
 }
-

@@ -1,5 +1,6 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useAuth } from "../../../auth/AuthContext.jsx";
+import { useToast } from "../../../components/Toast.jsx";
 import PokerCard from "../../../components/PokerCard.jsx";
 import ActionBar from "./ActionBar.jsx";
 
@@ -17,20 +18,6 @@ const SEAT_POSITIONS = [
   { left: "50%",   top: "96%" },   // 5: 当前用户
   { left: "25%",   top: "96%" },
   { left: "2.5%",  top: "50%" },
-];
-
-// 模拟公共牌和手牌（后续对接后端）
-const MOCK_COMMUNITY = [
-  { suit: "heart", rank: 1 },
-  { suit: "spade", rank: 13 },
-  { suit: "diamond", rank: 12 },
-  { suit: "club", rank: 7 },
-  { suit: "heart", rank: 10 },
-];
-
-const MOCK_HAND = [
-  { suit: "spade", rank: 1 },
-  { suit: "heart", rank: 13 },
 ];
 
 /* ------------------------------------------------
@@ -81,74 +68,96 @@ function Ornament({ flip }) {
 /* ------------------------------------------------
    PokerTable 主组件
    ------------------------------------------------ */
-export default function PokerTable({ room }) {
+export default function PokerTable({ room, onJoinTable, onLeaveTable, wsEmit, wsOn, wsConnected }) {
   const { user } = useAuth();
+  const toast = useToast();
 
-  // 构建座位列表：从 room.players 填充，当前用户默认在 seat 5
+  // 视角旋转
   const seats = useMemo(() => {
     const list = Array.from({ length: SEAT_COUNT }, (_, i) => ({
-      id: i,
-      player: null,
-      isMe: false,
+      visualSeat: i, player: null, isMe: false,
     }));
-
+    const me = room?.players?.find((p) => p.id === user?.id);
+    const mySeat = me?.seatIndex ?? MY_SEAT_INDEX;
+    const offset = (MY_SEAT_INDEX - mySeat + SEAT_COUNT) % SEAT_COUNT;
     if (room?.players?.length) {
-      // 用后端返回的座位数据
       for (const p of room.players) {
-        const idx = p.seatIndex;
-        if (idx >= 0 && idx < SEAT_COUNT) {
-          list[idx] = { id: idx, player: p, isMe: p.id === user?.id };
-        }
+        const visualIdx = (p.seatIndex + offset) % SEAT_COUNT;
+        list[visualIdx] = { visualSeat: visualIdx, player: p, isMe: p.id === user?.id };
       }
     } else if (user) {
-      // 没有 room 数据时，至少显示自己在座位 5
       list[MY_SEAT_INDEX] = {
-        id: MY_SEAT_INDEX,
+        visualSeat: MY_SEAT_INDEX,
         player: { id: user.id, phone: user.phone, avatar: user.avatar, chips: 1000, seatIndex: MY_SEAT_INDEX },
         isMe: true,
       };
     }
-
     return list;
   }, [room, user]);
 
-  // 游戏状态: waiting | dealing | playing
-  const [gameState, setGameState] = useState("waiting");
+  // 游戏状态
+  const [gameState, setGameState] = useState("waiting"); // waiting | playing
+  const [myHand, setMyHand] = useState([]);              // 我的手牌
+  const [community, setCommunity] = useState([]);         // 公共牌
+  const [pot, setPot] = useState(0);
+  const [turnInfo, setTurnInfo] = useState(null);         // 当前轮到谁
+  const isMyTurn = turnInfo?.playerId === user?.id;
 
-  // 公共牌翻面状态
-  const [communityRevealed, setCommunityRevealed] = useState([true, true, true, true, true]);
-
-  // 手牌翻面状态
-  const [handRevealed, setHandRevealed] = useState([true, true]);
-
-  // 发牌完成标记（控制动画结束后才可交互）
-  const [dealDone, setDealDone] = useState(false);
+  // 监听 WebSocket 游戏事件
+  useEffect(() => {
+    if (!wsOn) return;
+    const offs = [
+      wsOn("game:started", () => {
+        setGameState("playing");
+        setCommunity([]);
+        setMyHand([]);
+        setPot(0);
+        setTurnInfo(null);
+      }),
+      wsOn("game:deal", (data) => {
+        setMyHand(data.hand);
+      }),
+      wsOn("game:community", (data) => {
+        setCommunity(data.allCommunity);
+      }),
+      wsOn("game:turn", (data) => {
+        setTurnInfo(data);
+        setPot(data.pot);
+      }),
+      wsOn("game:action_result", (data) => {
+        setPot(data.pot);
+      }),
+      wsOn("game:round_end", () => {
+        setTimeout(() => {
+          setGameState("waiting");
+          setMyHand([]);
+          setCommunity([]);
+          setTurnInfo(null);
+        }, 3000); // 展示结果 3 秒后回到等待
+      }),
+      wsOn("game:error", (data) => {
+        toast.error(data.message);
+      }),
+    ];
+    return () => offs.forEach((off) => off?.());
+  }, [wsOn, user?.id]);
 
   const handleStartGame = useCallback(() => {
-    setGameState("dealing");
-    setCommunityRevealed([true, true, true, true, true]); // 公共牌先背面
-    setHandRevealed([true, true]); // 手牌先背面
-    setDealDone(false);
-
-    // 发牌动画完成后切换到 playing
-    setTimeout(() => {
-      setGameState("playing");
-      setDealDone(true);
-      // 翻开手牌
-      setTimeout(() => setHandRevealed([false, false]), 300);
-      // 逐步翻开公共牌 (flop → turn → river)
-      setTimeout(() => setCommunityRevealed([false, false, false, true, true]), 800);
-      setTimeout(() => setCommunityRevealed([false, false, false, false, true]), 1600);
-      setTimeout(() => setCommunityRevealed(prev => prev.map(() => false)), 2400);
-    }, 1200); // 发牌动画时长
-  }, []);
+    wsEmit?.("game:start");
+  }, [wsEmit]);
 
   const handleExitGame = useCallback(() => {
     setGameState("waiting");
-    setDealDone(false);
+    setMyHand([]);
+    setCommunity([]);
+    setTurnInfo(null);
   }, []);
 
-  const isPlaying = gameState === "playing" || gameState === "dealing";
+  const handleAction = useCallback((action, amount) => {
+    wsEmit?.("game:action", { action, amount });
+  }, [wsEmit]);
+
+  const isPlaying = gameState === "playing";
 
   return (
     <div className="tableArea">
@@ -176,52 +185,40 @@ export default function PokerTable({ room }) {
 
             {isPlaying && (
               <div className="ptGameArea">
-                {/* 上半区：底池 + 公牌 */}
                 <div className="ptGameArea__center">
-                  {dealDone && (
+                  {/* 底池 */}
+                  {pot > 0 && (
                     <div className="ptPot">
-                      底池: <span className="ptPot__value">120</span>
+                      底池: <span className="ptPot__value">{pot}</span>
                     </div>
                   )}
 
-                  <div className="ptCards">
-                    {MOCK_COMMUNITY.map((card, i) => (
-                      <div
-                        key={i}
-                        className="ptCards__dealSlot"
-                        style={{ "--deal-i": i }}
-                      >
-                        <PokerCard
-                          suit={card.suit}
-                          rank={card.rank}
-                          size="sm"
-                          faceDown={communityRevealed[i]}
-                          disabled={!dealDone}
-                          onClick={() =>
-                            dealDone && setCommunityRevealed(prev =>
-                              prev.map((v, j) => (j === i ? !v : v))
-                            )
-                          }
-                        />
-                      </div>
-                    ))}
-                  </div>
+                  {/* 公共牌 */}
+                  {community.length > 0 && (
+                    <div className="ptCards">
+                      {community.map((card, i) => (
+                        <div key={i} className="ptCards__dealSlot" style={{ "--deal-i": i }}>
+                          <PokerCard suit={card.suit} rank={card.rank} size="sm" disabled />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {/* 底部：操作栏贴着牌桌下边缘 */}
-                {dealDone && (
+                {/* 操作栏 — 只在轮到我时显示 */}
+                {isMyTurn && turnInfo && (
                   <div className="ptGameArea__bottom">
                     <ActionBar
-                      currentBet={40}
-                      minRaise={20}
-                      maxRaise={1000}
-                      pot={120}
-                      canCheck={false}
-                      onCheck={() => console.log("check")}
-                      onCall={() => console.log("call")}
-                      onFold={() => console.log("fold")}
-                      onRaise={(amt) => console.log("raise", amt)}
-                      onAllIn={() => console.log("all-in")}
+                      currentBet={turnInfo.currentBet}
+                      minRaise={turnInfo.minRaise}
+                      maxRaise={turnInfo.maxRaise}
+                      pot={turnInfo.pot}
+                      canCheck={turnInfo.canCheck}
+                      onCheck={() => handleAction("check")}
+                      onCall={() => handleAction("call")}
+                      onFold={() => handleAction("fold")}
+                      onRaise={(amt) => handleAction("raise", amt)}
+                      onAllIn={() => handleAction("allin")}
                     />
                   </div>
                 )}
@@ -245,11 +242,11 @@ export default function PokerTable({ room }) {
 
         {/* 座位 */}
         {seats.map((seat) => {
-          const pos = SEAT_POSITIONS[seat.id];
+          const pos = SEAT_POSITIONS[seat.visualSeat];
           const p = seat.player;
           return (
             <div
-              key={seat.id}
+              key={seat.visualSeat}
               className={`seat ${seat.isMe ? "seat--me" : ""}`}
               style={{ left: pos.left, top: pos.top }}
             >
@@ -272,14 +269,19 @@ export default function PokerTable({ room }) {
       {/* ====== 底部区域：按钮 或 手牌 ====== */}
       {!isPlaying ? (
         <div className="tableActions">
-          <button className="tableBtn tableBtn--primary" onClick={handleStartGame}>
+          <button
+            className="tableBtn tableBtn--primary"
+            onClick={handleStartGame}
+            disabled={room?.hostId !== user?.id}
+            title={room?.hostId !== user?.id ? "只有房主可以开始游戏" : ""}
+          >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="5 3 19 12 5 21 5 3" />
             </svg>
-            开始游戏
+            {room?.hostId !== user?.id ? "等待房主开始" : "开始游戏"}
           </button>
-          <button className="tableBtn tableBtn--secondary">
+          <button className="tableBtn tableBtn--secondary" onClick={onJoinTable}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
@@ -288,22 +290,21 @@ export default function PokerTable({ room }) {
             </svg>
             加入牌桌
           </button>
+          <button className="tableBtn tableBtn--secondary" onClick={onLeaveTable}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            退出牌桌
+          </button>
         </div>
       ) : (
         <div className="playerHand">
-          {MOCK_HAND.map((card, i) => (
-            <div
-              key={i}
-              className="playerHand__slot"
-              style={{ "--hand-i": i }}
-            >
-              <PokerCard
-                suit={card.suit}
-                rank={card.rank}
-                size="sm"
-                faceDown={handRevealed[i]}
-                disabled
-              />
+          {myHand.map((card, i) => (
+            <div key={i} className="playerHand__slot" style={{ "--hand-i": i }}>
+              <PokerCard suit={card.suit} rank={card.rank} size="sm" disabled />
             </div>
           ))}
         </div>
