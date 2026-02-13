@@ -6,13 +6,9 @@ import { setupSocket } from "./socket";
 
 async function main() {
   await connectMongo();
-
   const app = createApp();
   const server = http.createServer(app);
-
-  // WebSocket
   setupSocket(server);
-
   server.listen(env.PORT, () => {
     console.log(`[backend] listening on http://localhost:${env.PORT}`);
   });

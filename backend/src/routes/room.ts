@@ -8,8 +8,6 @@ import { generateUniqueInviteCode } from "../utils/inviteCode";
 import { broadcastRoomUpdate } from "../socket";
 
 export const roomRouter = Router();
-
-// 所有房间接口都需要登录
 roomRouter.use(requireAuth);
 
 /* ------------------------------------------------
@@ -55,57 +53,6 @@ function findEmptySeat(players: any[], maxPlayers: number): number {
 }
 
 /* ------------------------------------------------
-   POST /api/rooms — 创建房间
-   ------------------------------------------------ */
-const CreateSchema = z.object({
-  maxPlayers: z.number().int().min(2).max(8).default(8),
-  smallBlind: z.number().int().positive().default(10),
-  bigBlind: z.number().int().positive().default(20),
-  initialChips: z.number().int().positive().default(1000),
-});
-
-roomRouter.post("/", async (req, res, next) => {
-  try {
-    const { userId, phone } = req.auth!;
-    const opts = CreateSchema.parse(req.body);
-
-    // 检查用户是否已在某个等待中的房间
-    const existing = await RoomModel.findOne({
-      "players.userId": userId,
-      status: { $ne: "finished" },
-    });
-    if (existing) {
-      // 已在房间中，直接返回
-      return res.json({ room: await formatRoom(existing) });
-    }
-
-    const inviteCode = await generateUniqueInviteCode();
-
-    const room = await RoomModel.create({
-      inviteCode,
-      hostId: userId,
-      maxPlayers: opts.maxPlayers,
-      smallBlind: opts.smallBlind,
-      bigBlind: opts.bigBlind,
-      initialChips: opts.initialChips,
-      players: [
-        {
-          userId,
-          phone,
-          seatIndex: 5, // 下方居中
-          chips: opts.initialChips,
-          isOnline: true,
-        },
-      ],
-    });
-
-    res.status(201).json({ room: await formatRoom(room) });
-  } catch (e) {
-    next(e);
-  }
-});
-
-/* ------------------------------------------------
    GET /api/rooms/current — 获取当前所在房间
    如果没有则自动创建一个
    ------------------------------------------------ */
@@ -137,7 +84,7 @@ roomRouter.get("/current", async (req, res, next) => {
       });
     }
 
-    res.json({ room: await formatRoom(room) });
+    res.success({ room: await formatRoom(room) });
   } catch (e) {
     next(e);
   }
@@ -150,7 +97,7 @@ roomRouter.get("/:roomId", async (req, res, next) => {
   try {
     const room = await RoomModel.findById(req.params.roomId);
     if (!room) throw notFound("房间不存在", "ROOM_NOT_FOUND");
-    res.json({ room: await formatRoom(room) });
+    res.success({ room: await formatRoom(room) });
   } catch (e) {
     next(e);
   }
@@ -178,7 +125,7 @@ roomRouter.post("/join", async (req, res, next) => {
       (p) => p.userId.toString() === userId
     );
     if (alreadyIn) {
-      return res.json({ room: await formatRoom(room) });
+      return res.success({ room: await formatRoom(room) });
     }
 
     // 房间已满
@@ -213,7 +160,7 @@ roomRouter.post("/join", async (req, res, next) => {
     // 广播给房间内所有在线玩家
     broadcastRoomUpdate(room._id.toString()).catch(() => {});
 
-    res.json({ room: await formatRoom(room) });
+    res.success({ room: await formatRoom(room) });
   } catch (e) {
     next(e);
   }
@@ -254,23 +201,7 @@ roomRouter.post("/:roomId/leave", async (req, res, next) => {
       broadcastRoomUpdate(room._id.toString()).catch(() => {});
     }
 
-    res.json({ ok: true });
-  } catch (e) {
-    next(e);
-  }
-});
-
-/* ------------------------------------------------
-   GET /api/rooms/:roomId/invite — 获取邀请信息
-   ------------------------------------------------ */
-roomRouter.get("/:roomId/invite", async (req, res, next) => {
-  try {
-    const room = await RoomModel.findById(req.params.roomId);
-    if (!room) throw notFound("房间不存在", "ROOM_NOT_FOUND");
-
-    res.json({
-      inviteCode: room.inviteCode,
-    });
+    res.success({ ok: true });
   } catch (e) {
     next(e);
   }

@@ -5,13 +5,14 @@ import { requireAuth } from "../middleware/auth";
 import { conflict, unauthorized } from "../utils/httpErrors";
 import { signAccessToken } from "../utils/jwt";
 import { hashPassword, verifyPassword } from "../utils/password";
+import * as ErrorConstants from "../constants/errorConstants"
 
 const PhoneSchema = z
   .string()
   .trim()
-  .regex(/^\d{6,20}$/, "手机号格式不正确");
+  .regex(/\d{11}$/, ErrorConstants.PHONE_NUMBER_FORMAT);
 
-const PasswordSchema = z.string().min(6, "密码至少 6 位").max(72);
+const PasswordSchema = z.string().min(6, ErrorConstants.PASSWORD_FORMAT).max(20);
 
 const RegisterSchema = z.object({
   phone: PhoneSchema,
@@ -30,13 +31,13 @@ authRouter.post("/register", async (req, res, next) => {
     const { phone, password } = RegisterSchema.parse(req.body);
 
     const exists = await UserModel.exists({ phone });
-    if (exists) throw conflict("手机号已注册", "PHONE_EXISTS");
+    if (exists) throw conflict(ErrorConstants.PHONE_HAS_USED);
 
     const passwordHash = await hashPassword(password);
     const user = await UserModel.create({ phone, passwordHash, tokenVersion: 0 });
 
     const token = signAccessToken({ sub: user._id.toString(), phone: user.phone, ver: 0 });
-    res.json({ token, user: { id: user._id.toString(), phone: user.phone, avatar: "" } });
+    res.success({ token, user: { id: user._id.toString(), phone: user.phone, avatar: "" } });
   } catch (e) {
     next(e);
   }
@@ -47,17 +48,16 @@ authRouter.post("/login", async (req, res, next) => {
     const { phone, password } = LoginSchema.parse(req.body);
 
     const user = await UserModel.findOne({ phone });
-    if (!user) throw unauthorized("手机号或密码错误", "BAD_CREDENTIALS");
+    if (!user) throw unauthorized(ErrorConstants.ACCOUNT_INFORMATION_ERROR);
 
     const ok = await verifyPassword(password, user.passwordHash);
-    if (!ok) throw unauthorized("手机号或密码错误", "BAD_CREDENTIALS");
+    if (!ok) throw unauthorized(ErrorConstants.ACCOUNT_INFORMATION_ERROR);
 
-    // 递增 tokenVersion，旧 token 立即失效
     const newVer = (user.tokenVersion ?? 0) + 1;
     await UserModel.updateOne({ _id: user._id }, { tokenVersion: newVer });
 
     const token = signAccessToken({ sub: user._id.toString(), phone: user.phone, ver: newVer });
-    res.json({ token, user: { id: user._id.toString(), phone: user.phone, avatar: user.avatar || "" } });
+    res.success({ token, user: { id: user._id.toString(), phone: user.phone, avatar: user.avatar || "" } });
   } catch (e) {
     next(e);
   }
@@ -65,6 +65,6 @@ authRouter.post("/login", async (req, res, next) => {
 
 authRouter.get("/me", requireAuth, async (req, res) => {
   const user = await UserModel.findById(req.auth!.userId).lean();
-  res.json({ user: { id: req.auth!.userId, phone: req.auth!.phone, avatar: user?.avatar || "" } });
+  res.success({ user: { id: req.auth!.userId, phone: req.auth!.phone, avatar: user?.avatar || "" } });
 });
 

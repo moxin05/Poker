@@ -6,8 +6,11 @@ declare global {
         phone: string;
       };
     }
+
+    interface Response {
+      success<T>(data: T, msg?: string): void;
+    }
   }
 }
 
 export {};
-

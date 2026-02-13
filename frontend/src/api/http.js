@@ -11,18 +11,21 @@ export async function fetchJson(path, { method = "GET", token, body } = {}) {
   });
 
   const contentType = res.headers.get("content-type") || "";
-  const data = contentType.includes("application/json") ? await res.json() : null;
+  const body = contentType.includes("application/json") ? await res.json() : null;
 
   if (!res.ok) {
-    const message =
-      data?.error?.message || data?.message || `请求失败 (${res.status})`;
-    const code = data?.error?.code || "HTTP_ERROR";
+    const message = body?.msg || body?.error?.message || body?.message || `请求失败 (${res.status})`;
+    const code = body?.code ?? body?.error?.code ?? "HTTP_ERROR";
     const err = new Error(message);
     err.code = code;
     err.status = res.status;
     throw err;
   }
 
-  return data;
+  // 统一格式 { code, data, msg }：成功时返回 data，兼容旧调用方
+  if (body && typeof body.code === "number" && body.data !== undefined) {
+    return body.data;
+  }
+  return body;
 }
 

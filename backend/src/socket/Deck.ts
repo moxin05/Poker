@@ -1,7 +1,3 @@
-/**
- * 一副扑克牌（52张）
- */
-
 export type Card = {
   suit: "heart" | "spade" | "diamond" | "club";
   rank: number; // 1=A, 2-10, 11=J, 12=Q, 13=K

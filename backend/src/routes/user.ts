@@ -57,7 +57,7 @@ userRouter.post("/avatar", upload.single("avatar"), async (req, res, next) => {
 
     await UserModel.findByIdAndUpdate(userId, { avatar: avatarUrl });
 
-    res.json({ avatar: avatarUrl });
+    res.success({ avatar: avatarUrl });
   } catch (e) {
     next(e);
   }
@@ -72,7 +72,7 @@ userRouter.get("/profile", async (req, res, next) => {
     const user = await UserModel.findById(userId).lean();
     if (!user) throw badRequest("用户不存在", "USER_NOT_FOUND");
 
-    res.json({
+    res.success({
       user: {
         id: user._id.toString(),
         phone: user.phone,
